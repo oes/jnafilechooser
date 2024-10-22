@@ -246,14 +246,13 @@ public class JnaFileChooser
 
 	private boolean showMacFileChooser(Frame parent, Action action) {
 		int mode = action == Action.Open ? FileDialog.LOAD : FileDialog.SAVE;
-		String title = action == Action.Open ? "Open" : "Save";
+		String title = !dialogTitle.isEmpty() ?
+				dialogTitle : (action == Action.Open ? "Open" : "Save As");
 		FileDialog fd = new FileDialog(parent, title, mode);
 		fd.setMultipleMode(multiSelectionEnabled);
 
 		if (!defaultFile.isEmpty())
 			fd.setFile(defaultFile);
-		if (!dialogTitle.isEmpty())
-			fd.setTitle(dialogTitle);
 
 		if (currentDirectory != null) {
 			if (currentDirectory.isDirectory())
@@ -269,12 +268,12 @@ public class JnaFileChooser
 			// filterSpec is formatted as [ name, ext1, ext2, ext3, ... ]
 			for (String[] filterSpec : filters) {
 				for (int i = 1; i < filterSpec.length; i++) {
-					String filter = filterSpec[i];
+					String filter = filterSpec[i].toLowerCase();
 					if (filter.startsWith("*")) {
-						if (filename.endsWith(filter.substring(1)))
+						if (filename.toLowerCase().endsWith(filter.substring(1)))
 							return true;
 					} else {
-						if (filename.endsWith(filter))
+						if (filename.toLowerCase().endsWith(filter))
 							return true;
 					}
 				}
@@ -295,7 +294,8 @@ public class JnaFileChooser
 	}
 
 	public boolean showMacFolderBrowser(Frame parent) {
-		FileDialog fd = new FileDialog(parent, "Open", FileDialog.LOAD);
+		String title = !dialogTitle.isEmpty() ? dialogTitle : "Open";
+		FileDialog fd = new FileDialog(parent, title, FileDialog.LOAD);
 		if (!dialogTitle.isEmpty())
 			fd.setTitle(dialogTitle);
 
