@@ -269,8 +269,14 @@ public class JnaFileChooser
 			// filterSpec is formatted as [ name, ext1, ext2, ext3, ... ]
 			for (String[] filterSpec : filters) {
 				for (int i = 1; i < filterSpec.length; i++) {
-					if (filename.endsWith(filterSpec[i]))
-						return true;
+					String filter = filterSpec[i];
+					if (filter.startsWith("*")) {
+						if (filename.endsWith(filter.substring(1)))
+							return true;
+					} else {
+						if (filename.endsWith(filter))
+							return true;
+					}
 				}
 			}
 			return false;
