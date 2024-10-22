@@ -9,6 +9,8 @@
  */
 package jnafilechooser.api;
 
+import java.awt.FileDialog;
+import java.awt.Frame;
 import java.awt.Window;
 import java.io.File;
 import java.util.ArrayList;
@@ -140,6 +142,11 @@ public class JnaFileChooser
 			else if (mode == Mode.Directories) {
 				return showWindowsFolderBrowser(parent);
 			}
+		} else if (Platform.isMac()) {
+			if (mode == Mode.Files)
+				return showMacFileChooser((Frame) parent, action);
+			else if (mode == Mode.Directories)
+				return showMacFolderBrowser((Frame) parent);
 		}
 
 		// fallback to Swing
@@ -232,6 +239,76 @@ public class JnaFileChooser
 			currentDirectory = file.getParentFile() != null ?
 				file.getParentFile() : file;
 			return true;
+		}
+
+		return false;
+	}
+
+	private boolean showMacFileChooser(Frame parent, Action action) {
+		int mode = action == Action.Open ? FileDialog.LOAD : FileDialog.SAVE;
+		String title = !dialogTitle.isEmpty() ?
+				dialogTitle : (action == Action.Open ? "Open" : "Save As");
+		FileDialog fd = new FileDialog(parent, title, mode);
+		fd.setMultipleMode(multiSelectionEnabled);
+
+		if (!defaultFile.isEmpty())
+			fd.setFile(defaultFile);
+
+		if (currentDirectory != null) {
+			if (currentDirectory.isDirectory())
+				fd.setDirectory(currentDirectory.getAbsolutePath());
+			else
+				fd.setDirectory(currentDirectory.getParent());
+		}
+
+		fd.setFilenameFilter((dir, filename) -> {
+			if (filters.isEmpty())
+				return true;
+
+			// filterSpec is formatted as [ name, ext1, ext2, ext3, ... ]
+			for (String[] filterSpec : filters) {
+				for (int i = 1; i < filterSpec.length; i++) {
+					String filter = filterSpec[i].toLowerCase();
+					if (filter.startsWith("*")) {
+						if (filename.toLowerCase().endsWith(filter.substring(1)))
+							return true;
+					} else {
+						if (filename.toLowerCase().endsWith(filter))
+							return true;
+					}
+				}
+			}
+			return false;
+		});
+
+		fd.setVisible(true);
+
+		if (fd.getFile() != null) {
+			selectedFiles = multiSelectionEnabled ?
+				fd.getFiles() : new File[] { new File(fd.getDirectory(), fd.getFile()) };
+			currentDirectory = new File(fd.getDirectory());
+			return true;
+		}
+
+		return false;
+	}
+
+	public boolean showMacFolderBrowser(Frame parent) {
+		String title = !dialogTitle.isEmpty() ? dialogTitle : "Open";
+		FileDialog fd = new FileDialog(parent, title, FileDialog.LOAD);
+		if (!dialogTitle.isEmpty())
+			fd.setTitle(dialogTitle);
+
+		try {
+			System.setProperty("apple.awt.fileDialogForDirectories", "true");
+			fd.setVisible(true);
+			if (fd.getFile() != null) {
+				selectedFiles = new File[] { new File(fd.getDirectory(), fd.getFile()) };
+				currentDirectory = new File(fd.getDirectory());
+				return true;
+			}
+		} finally {
+			System.setProperty("apple.awt.fileDialogForDirectories", "false");
 		}
 
 		return false;
