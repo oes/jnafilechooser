@@ -1,7 +1,7 @@
 # JnaFileChooser
 
 This is a small API that uses the native file chooser and folder browser 
-dialogs on Windows if possible. It falls back to the Swing JFileChooser 
+dialogs on Windows and Mac OS if possible. It falls back to the Swing JFileChooser 
 class if necessary.
 
 ## Example Usage
